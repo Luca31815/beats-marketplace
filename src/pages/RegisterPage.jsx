@@ -25,7 +25,7 @@ export default function RegisterPage() {
         <label>Email</label>
         <input type="email" required value={email} onChange={e => setEmail(e.target.value)} />
         <label>Contraseña</label>
-        <input type="password" required value={password} onChange={e => setPassword(e.target.value)} />
+        <input type="passwor" required value={password} onChange={e => setPassword(e.target.value)} />
         <button type="submit">Registrarse</button>
       </form>
       {errorMsg && <p style={{ color: 'red' }}>{errorMsg}</p>}
