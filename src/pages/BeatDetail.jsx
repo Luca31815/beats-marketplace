@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import PreviewPlayer from '../components/PreviewPlayer';
-import MercadoPagoButton from '../components/MercadoPagoButton';
 
 export default function BeatDetail() {
   const { id } = useParams();
@@ -50,11 +49,6 @@ export default function BeatDetail() {
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-2">Preview</h2>
         <PreviewPlayer url={beat.preview_path} />
-      </div>
-
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Compra</h2>
-        <MercadoPagoButton beat={beat} />
       </div>
     </div>
   );
