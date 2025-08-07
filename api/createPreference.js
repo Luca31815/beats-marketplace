@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
   // Inicializa Supabase con service_role (necesitas la KEY con privilegios)
   const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.REACT_APP_SUPABASE_URL,
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
