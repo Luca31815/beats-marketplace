@@ -12,7 +12,6 @@ export default async function handler(req, res) {
     if (!beatId || !userEmail) {
       return res.status(400).json({ error: "beatId and userEmail are required" });
     }
-
     // Lee las vars de entorno que acabas de definir
     const supabaseUrl = process.env.SUPABASE_URL;
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
