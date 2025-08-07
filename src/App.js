@@ -1,35 +1,40 @@
 // src/App.js
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import NavMenu from './components/NavMenu';
+import HomePage from './pages/HomePage';
 import TestConnection from './pages/TestConnection';
-import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/LoginPage';
 import UploadPage from './pages/UploadPage';
-import ProtectedRoute from './components/ProtectedRoute';
+import BeatDetail from './pages/BeatDetail';
+import { useAuth } from './hooks/useAuth';
 
-function Home() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>Bienvenido al Marketplace de Beats</p>
-        <p>Puedes ir a <code>/test</code> para probar la conexión a Supabase.</p>
-      </header>
-    </div>
-  );
+// Ruta protegida: solo usuarios autenticados
+function ProtectedRoute({ children }) {
+  const user = useAuth();
+  if (user === undefined) {
+    return null;
+  }
+  if (user === null) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
 }
 
-
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
+      {/* Menú de navegación global */}
+      <NavMenu />
       <Routes>
-        <Route path="/" element={<Home />} />
+        {/* Páginas públicas */}
+        <Route path="/" element={<HomePage />} />
         <Route path="/test" element={<TestConnection />} />
-        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Páginas protegidas */}
         <Route
           path="/upload"
           element={
@@ -38,10 +43,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route path="/beats/:id" element={<BeatDetail />} />
+        {/* Cualquier otra ruta redirige al inicio */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default App;
