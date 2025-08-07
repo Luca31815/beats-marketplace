@@ -1,5 +1,5 @@
 // api/createPreference.js
-import mercadopago from 'mercadopago';
+import { loadMercadoPago } from "@mercadopago/sdk-js";
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -41,8 +41,9 @@ export default async function handler(req, res) {
     }
 
     // Configura SDK MercadoPago
-    mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN);
-
+    loadMercadoPago.configure({
+      access_token: process.env.MP_ACCESS_TOKEN
+    });
     // Crea la preferencia
     const { body } = await mercadopago.preferences.create({
       items: [
