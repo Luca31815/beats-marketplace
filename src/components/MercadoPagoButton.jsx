@@ -1,4 +1,4 @@
-// F:\PROYECTOS\BEATS-MARKETPLACE\src\components\MercadoPagoButton.jsx
+// src/components/MercadoPagoButton.jsx
 import { useEffect, useState } from "react";
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
 
@@ -9,16 +9,36 @@ export default function MercadoPagoButton({ items, email }) {
     initMercadoPago(process.env.REACT_APP_MP_PUBLIC_KEY);
 
     async function createPref() {
-      const res = await fetch("../../api/createPreference", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items, email }),
-      });
-      if (!res.ok) {
-        console.error("⚠️ createPreference falló:", await res.text());
+      let res;
+      try {
+        res = await fetch("/api/createPreference", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ items, email }),
+        });
+      } catch (err) {
+        console.error("❌ Error al conectar con la API:", err);
         return;
       }
-      const { preferenceId } = await res.json();
+
+      // Si nos devuelve 405, intentamos un GET para ver el mensaje
+      if (res.status === 405) {
+        console.warn("⚠️ Método POST no permitido, haciendo fallback a GET…");
+        const getRes = await fetch("/api/createPreference");
+        const info = await getRes.json();
+        console.log("ℹ️ Respuesta al GET:", info);
+        return;
+      }
+
+      const text = await res.text();
+      console.log("⚙️ createPreference raw response:", text);
+
+      if (!res.ok) {
+        console.error("⚠️ createPreference falló:", text);
+        return;
+      }
+
+      const { preferenceId } = JSON.parse(text);
       setPreferenceId(preferenceId);
     }
 
@@ -26,6 +46,7 @@ export default function MercadoPagoButton({ items, email }) {
   }, [items, email]);
 
   if (!preferenceId) return <p>Cargando pago…</p>;
+
   return (
     <Payment
       initialization={{ preferenceId }}
