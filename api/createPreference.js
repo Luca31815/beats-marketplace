@@ -39,7 +39,9 @@ export default async function handler(req, res) {
       return res.status(404).json({ error: bErr?.message || "Beat not found" });
 
     // 6) Configura MercadoPago correctamente
-    mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN);
+    mercadopago.configure({
+      access_token: process.env.MP_ACCESS_TOKEN
+    });
 
     // 7) Crea la preferencia
     const { body } = await mercadopago.preferences.create({
