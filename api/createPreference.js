@@ -1,7 +1,11 @@
 // pages/api/createPreference.js
 import mercadopago from "mercadopago";
 
+
 export default async function handler(req, res) {
+  console.log("🚀 createPreference invoked");
+  console.log("ENV MP_ACCESS_TOKEN:", process.env.MP_ACCESS_TOKEN);
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
