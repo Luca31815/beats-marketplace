@@ -3,19 +3,16 @@ import mercadopago from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
-  // 1) CORS preflight
+  // CORS preflight
   if (req.method === "OPTIONS") {
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
     return res.status(200).end();
   }
-
-  // 2) Todas las respuestas reales también deben permitir CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
 
   try {
-    // 3) Solo aceptamos POST
     if (req.method !== "POST")
       return res.status(405).json({ error: "Method not allowed" });
 
@@ -23,13 +20,13 @@ export default async function handler(req, res) {
     if (!beatId || !userEmail)
       return res.status(400).json({ error: "beatId and userEmail required" });
 
-    // 4) Inicializa el cliente de Supabase con service_role
+    // Inicializa Supabase
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // 5) Consulta el beat
+    // Trae el beat
     const { data: beat, error: bErr } = await supabase
       .from("beats")
       .select("title,price")
@@ -38,12 +35,12 @@ export default async function handler(req, res) {
     if (bErr || !beat)
       return res.status(404).json({ error: bErr?.message || "Beat not found" });
 
-    // 6) Configura MercadoPago correctamente
+    // Configura el SDK de MercadoPago v2.x
     mercadopago.configure({
       access_token: process.env.MP_ACCESS_TOKEN
     });
 
-    // 7) Crea la preferencia
+    // Crea la preferencia
     const { body } = await mercadopago.preferences.create({
       items: [
         {
@@ -61,7 +58,6 @@ export default async function handler(req, res) {
       },
     });
 
-    // 8) Devuelve el ID de la preferencia
     return res.status(200).json({ preferenceId: body.id });
   } catch (err) {
     console.error("createPreference error:", err);
