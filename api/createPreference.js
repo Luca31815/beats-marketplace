@@ -1,31 +1,48 @@
-// api/createPreference.js
 import mercadopago from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
   try {
-    if (req.method !== "POST") {
+    if (req.method !== "POST")
       return res.status(405).json({ error: "Method not allowed" });
-    }
 
     const { beatId, userEmail } = req.body;
-    if (!beatId || !userEmail) {
-      return res.status(400).json({ error: "beatId and userEmail are required" });
-    }
-    // Lee las vars de entorno que acabas de definir
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!supabaseUrl || !serviceRoleKey) {
-      throw new Error("Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY");
-    }
+    if (!beatId || !userEmail)
+      return res.status(400).json({ error: "beatId and userEmail required" });
 
-    // Inicializa el cliente con la URL correcta
-    const supabase = createClient(supabaseUrl, serviceRoleKey);
+    // Inicializa Supabase SERVER
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
 
-    // ... resto de tu lógica (fetch beat, crear preferencia, etc.)
-    // Siempre devolviendo JSON en try/catch
+    // 1) Trae el beat
+    const { data: beat, error: bErr } = await supabase
+      .from("beats")
+      .select("title,price")
+      .eq("id", beatId)
+      .single();
+    if (bErr || !beat)
+      return res.status(404).json({ error: bErr?.message || "Beat not found" });
+
+    // 2) Configura MP
+    mercadopago.configure({ access_token: process.env.MP_ACCESS_TOKEN });
+
+    // 3) Crea preference
+    const { body } = await mercadopago.preferences.create({
+      items: [{
+        title: beat.title,
+        quantity: 1,
+        currency_id: "ARS",
+        unit_price: Number(beat.price),
+      }],
+      payer: { email: userEmail },
+      back_urls: { success: "/", failure: "/", pending: "/" },
+    });
+
+    return res.status(200).json({ preferenceId: body.id });
   } catch (err) {
     console.error("createPreference error:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message || "Internal error" });
   }
 }

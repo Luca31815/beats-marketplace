@@ -12,7 +12,7 @@ export default function MercadoPagoButton({ beat }) {
   useEffect(() => {
     if (!user) return;
     console.log('[MP] creating preference for beat', beat.id, 'user', user.email);
-    fetch('/api/createPreference', {
+    fetch('https://beats-marketplace-six.vercel.app/api/createPreference', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ beatId: beat.id, userEmail: user.email }),
