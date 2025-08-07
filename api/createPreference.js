@@ -1,70 +1,32 @@
-// api/createPreference.js
-import { loadMercadoPago } from "@mercadopago/sdk-js";
+// pages/api/createPreference.js
+import mercadopago from "mercadopago";
 
-import { createClient } from '@supabase/supabase-js';
+// Configura tu access token (guárdalo en .env: MP_ACCESS_TOKEN)
+mercadopago.configure({
+  access_token: process.env.MP_ACCESS_TOKEN
+});
 
 export default async function handler(req, res) {
-  // CORS preflight
-  if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    return res.status(200).end();
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
-  // Habilita CORS para la respuesta real
-  res.setHeader('Access-Control-Allow-Origin', '*');
 
+  const { items, email } = req.body;
   try {
-    if (req.method !== 'POST') {
-      return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const { beatId, userEmail } = req.body;
-    if (!beatId || !userEmail) {
-      return res.status(400).json({ error: 'beatId and userEmail required' });
-    }
-
-    // Inicializa Supabase con service role
-    const supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY
-    );
-
-    // Consulta el beat
-    const { data: beat, error: bErr } = await supabase
-      .from('beats')
-      .select('title,price')
-      .eq('id', beatId)
-      .single();
-    if (bErr || !beat) {
-      return res.status(404).json({ error: bErr?.message || 'Beat not found' });
-    }
-
-    // Configura SDK MercadoPago
-    loadMercadoPago.configure({
-      access_token: process.env.MP_ACCESS_TOKEN
-    });
-    // Crea la preferencia
-    const { body } = await mercadopago.preferences.create({
-      items: [
-        {
-          title: beat.title,
-          quantity: 1,
-          currency_id: 'ARS',
-          unit_price: Number(beat.price),
-        },
-      ],
-      payer: { email: userEmail },
+    const preferenceData = {
+      items,
+      payer: { email },
       back_urls: {
-        success: `https://${req.headers.host}/checkout/success`,
-        failure: `https://${req.headers.host}/checkout/failure`,
-        pending: `https://${req.headers.host}/checkout/pending`,
+        success: `${req.headers.origin}/success`,
+        failure: `${req.headers.origin}/failure`,
+        pending: `${req.headers.origin}/pending`
       },
-    });
-
+      auto_return: "approved"
+    };
+    const { body } = await mercadopago.preferences.create(preferenceData);
     return res.status(200).json({ preferenceId: body.id });
-  } catch (err) {
-    console.error('createPreference error:', err);
-    return res.status(500).json({ error: err.message || 'Internal error' });
+  } catch (error) {
+    console.error("MercadoPago error:", error);
+    return res.status(500).json({ error: error.message });
   }
 }
