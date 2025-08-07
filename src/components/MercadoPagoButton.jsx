@@ -21,15 +21,7 @@ export default function MercadoPagoButton({ items, email }) {
         return;
       }
 
-      // Si nos devuelve 405, intentamos un GET para ver el mensaje
-      if (res.status === 405) {
-        console.warn("⚠️ Método POST no permitido, haciendo fallback a GET…");
-        const getRes = await fetch("/api/createPreference");
-        const info = await getRes.json();
-        console.log("ℹ️ Respuesta al GET:", info);
-        return;
-      }
-
+      
       const text = await res.text();
       console.log("⚙️ createPreference raw response:", text);
 
