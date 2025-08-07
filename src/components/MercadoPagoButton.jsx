@@ -13,8 +13,18 @@ export default function MercadoPagoButton({ beat }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ beatId: beat.id, userEmail: user.email }),
     })
-      .then(r => r.json())
-      .then(data => setPreferenceId(data.preferenceId));
+      .then(async (res) => {
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || res.statusText);
+    }
+    return res.json();
+  })
+  .then(data => setPreferenceId(data.preferenceId))
+  .catch(err => {
+    console.error("Error creating preference:", err);
+    // muestra mensaje al usuario si quieres
+  });
   }, [beat.id, user]);
 
   useEffect(() => {
