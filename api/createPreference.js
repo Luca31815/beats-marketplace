@@ -41,9 +41,7 @@ export default async function handler(req, res) {
     }
 
     // 6) Configura el SDK de MercadoPago (v2.x)
-    mercadopago.configure({
-      access_token: process.env.MP_ACCESS_TOKEN,
-    });
+    mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN);
 
     // 7) Crea la preferencia
     const { body } = await mercadopago.preferences.create({
