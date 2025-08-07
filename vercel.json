@@ -1,0 +1,16 @@
+// vercel.json
+{
+  "version": 2,
+  "builds": [
+    // 1) cualquier .js en api/ es función serverless
+    { "src": "api/**/*.js", "use": "@vercel/node" },
+    // 2) el resto se builda como CRA estático
+    { "src": "package.json",  "use": "@vercel/static-build", "config": { "distDir": "build" } }
+  ],
+  "routes": [
+    // 1) /api/XXX → tu función api/XXX.js
+    { "src": "/api/(.*)", "dest": "/api/$1.js" },
+    // 2) todo lo demás → index.html para SPA
+    { "src": "/(.*)",     "dest": "/index.html" }
+  ]
+}
