@@ -1,8 +1,21 @@
+// api/createPreference.js
 import mercadopago from "mercadopago";
 import { createClient } from "@supabase/supabase-js";
 
 export default async function handler(req, res) {
+  // 1) CORS preflight
+  if (req.method === "OPTIONS") {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    return res.status(200).end();
+  }
+
+  // 2) Todas las respuestas reales también deben permitir CORS
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
   try {
+    // 3) Solo aceptamos POST
     if (req.method !== "POST")
       return res.status(405).json({ error: "Method not allowed" });
 
@@ -10,13 +23,13 @@ export default async function handler(req, res) {
     if (!beatId || !userEmail)
       return res.status(400).json({ error: "beatId and userEmail required" });
 
-    // Inicializa Supabase SERVER
+    // 4) Inicializa el cliente de Supabase con service_role
     const supabase = createClient(
       process.env.SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // 1) Trae el beat
+    // 5) Consulta el beat
     const { data: beat, error: bErr } = await supabase
       .from("beats")
       .select("title,price")
@@ -25,21 +38,28 @@ export default async function handler(req, res) {
     if (bErr || !beat)
       return res.status(404).json({ error: bErr?.message || "Beat not found" });
 
-    // 2) Configura MP
-    mercadopago.configure({ access_token: process.env.MP_ACCESS_TOKEN });
+    // 6) Configura MercadoPago correctamente
+    mercadopago.configurations.setAccessToken(process.env.MP_ACCESS_TOKEN);
 
-    // 3) Crea preference
+    // 7) Crea la preferencia
     const { body } = await mercadopago.preferences.create({
-      items: [{
-        title: beat.title,
-        quantity: 1,
-        currency_id: "ARS",
-        unit_price: Number(beat.price),
-      }],
+      items: [
+        {
+          title: beat.title,
+          quantity: 1,
+          currency_id: "ARS",
+          unit_price: Number(beat.price),
+        },
+      ],
       payer: { email: userEmail },
-      back_urls: { success: "/", failure: "/", pending: "/" },
+      back_urls: {
+        success: `https://${req.headers.host}/checkout/success`,
+        failure: `https://${req.headers.host}/checkout/failure`,
+        pending: `https://${req.headers.host}/checkout/pending`,
+      },
     });
 
+    // 8) Devuelve el ID de la preferencia
     return res.status(200).json({ preferenceId: body.id });
   } catch (err) {
     console.error("createPreference error:", err);
