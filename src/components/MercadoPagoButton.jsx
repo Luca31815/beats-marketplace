@@ -9,7 +9,7 @@ export default function MercadoPagoButton({ items, email }) {
     initMercadoPago(process.env.REACT_APP_MP_PUBLIC_KEY);
 
     async function createPref() {
-      const res = await fetch("/api/createPreference", {
+      const res = await fetch("../../api/createPreference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items, email }),
