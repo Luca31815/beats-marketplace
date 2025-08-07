@@ -2,20 +2,25 @@
 import { useEffect, useState } from "react";
 import { initMercadoPago, Payment } from "@mercadopago/sdk-react";
 
-export default function MercadoPagoButton({ items, email, amount }) {
+export default function MercadoPagoButton({ items, email }) {
   const [preferenceId, setPreferenceId] = useState(null);
 
   useEffect(() => {
-    // Inicializa MercadoPago con tu PUBLIC_KEY
-    initMercadoPago(process.env.REACT_APP_MP_PUBLIC_KEY);
+    initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY);
 
-    // Crea la preferencia en tu backend
     const createPref = async () => {
       const res = await fetch("/api/createPreference", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ items, email })
       });
+
+      if (!res.ok) {
+        const texto = await res.text();
+        console.error("⚠️ createPreference falló:", texto);
+        return;
+      }
+
       const { preferenceId } = await res.json();
       setPreferenceId(preferenceId);
     };
@@ -24,10 +29,9 @@ export default function MercadoPagoButton({ items, email, amount }) {
   }, [items, email]);
 
   if (!preferenceId) return <p>Cargando pago...</p>;
-
   return (
     <Payment
-      initialization={{ preferenceId, amount }}
+      initialization={{ preferenceId }}
       onSubmit={(data) => console.log("Payment data:", data)}
     />
   );
